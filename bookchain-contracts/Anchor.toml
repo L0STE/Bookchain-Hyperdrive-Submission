@@ -1,14 +1,14 @@
 [features]
 seeds = false
 skip-lint = false
-[programs.localnet]
+[programs.devnet]
 bookchain_contracts = "Dad4s5C2MTErQtFCwai2DgmskftMPM8iLxrJ3MRXrz62"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "Devnet"
 wallet = "/Users/elon/.config/solana/id.json"
 
 [scripts]

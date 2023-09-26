@@ -60,7 +60,7 @@ export const ActiveProjectCard = ({ projectData }) => {
             </div>
             <div className="flex justify-between items-center mb-2">
                 <h1 className="text-black font-raleway font-bold text-BodySmall">Balance</h1>
-                <p className="text-black font-raleway font-bold text-BodySmall">{projectData.balance}</p>
+                <p className="text-black font-raleway font-bold text-BodySmall">{projectData.balance} {projectData.token}</p>
             </div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-black font-raleway font-bold text-BodySmall">Deposit & Withdrawal</h1>
@@ -130,7 +130,7 @@ export const ActiveProjectCard = ({ projectData }) => {
                             <button className="border-t border-r border-b border-black cursor-default text-black font-raleway font-bold text-Body" style={{width: '75px', height: '40px'}}>{projectData.token}</button>
                         </div>
                         <div className="text-right -mt-3">
-                            <p className="text-gray-500 font-raleway font-bold text-BodySmall">Needs to be a value {'<'} of {projectData.balance}</p>
+                            <p className="text-gray-500 font-raleway font-bold text-BodySmall">Needs to be a value {'<'} of {projectData.balance} {projectData.token} </p>
                         </div>
                         </div>
                     </div>
@@ -167,13 +167,18 @@ export const ActiveProjectCard = ({ projectData }) => {
                                 ))}
                                 {inactiveEmployees.length === 0 && (
                                     <div className="border border-black rounded-lg flex items-center justify-center" style={{width: '215px', height: '40px'}}>
-                                        <h1 className="text-black font-raleway font-bold text-BodySmaller">No Unactive Employee...</h1>
+                                        <h1 className="text-black font-raleway font-bold text-BodySmall">No Unactive Employee...</h1>
                                     </div>
                                 )}
                             </div>
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* New Employee Modal */}
+            {isModalNewEmployeeOpen && (
+                <div></div>
             )}
         </div>
     );

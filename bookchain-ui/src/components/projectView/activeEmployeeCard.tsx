@@ -25,13 +25,13 @@ export const ActiveEmployeeCard = ({ employeeData, projectData }) => {
             </div>
 
             <div className="flex justify-between items-center mt-2">
-                <h1 className="text-black font-raleway font-bold text-BodySmall">Status</h1>
-                <div className="flex items-center space-x-1">
-                    {employeeData.autoRenewal ? (
-                        <h1 className="text-black font-raleway font-bold text-BodySmall">Salaried</h1>
-                    ) : (
-                        <h1 className="text-black font-raleway font-bold text-BodySmall">Freelancer</h1>
-                    )}
+                {employeeData.autoRenewal ? (
+                    <h1 className="text-black font-raleway font-bold text-BodySmall">Salaried </h1>
+                ) : (
+                    <h1 className="text-black font-raleway font-bold text-BodySmall">Freelancer</h1>
+                )}
+                <div className="flex items-center space-x-2">
+                    <h1 className='text-BodySmall text-black font-raleway font-bold'> 15.02-15.03 </h1>
                     <div className="border border-black flex items-center justify-center cursor-pointer rounded shadow-xl" style={{width: '14px', height: '14px'}}>
                         <Image src={changeImage} alt="Attention" style={{width: '8px', height: '8px'}}/>
                     </div>

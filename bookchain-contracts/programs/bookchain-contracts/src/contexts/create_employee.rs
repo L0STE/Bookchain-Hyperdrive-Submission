@@ -1,6 +1,4 @@
-use anchor_lang::{prelude::*};
-use anchor_spl::token::{Mint, Token, TokenAccount};
-use anchor_spl::associated_token::AssociatedToken;
+use anchor_lang::prelude::*;
 
 use crate::errors::EmplErr;
 use crate::errors::ProjError;
@@ -29,19 +27,16 @@ pub struct EmployeeInit<'info> {
 impl<'info> EmployeeInit<'info> {
     pub fn init(
         &mut self,
-        id: u64,
         employee_wallet: Pubkey,
         username: String,
         department: String,
         title: String,
-        compensation_amount: u64,
         employee_bump: u8,
     ) -> Result<()> {
         //Employee Check
         require!(username.len() < 20, EmplErr::NameTooLong);
         require!(department.len() < 20, EmplErr::DepartmentTooLong);
         require!(title.len() < 20, EmplErr::TitleTooLong);
-        require!(compensation_amount>0, EmplErr::PayTooLow);
 
         //Project Check
         require!(self.project.authority.key() == self.initializer.key(), ProjError::NotAuthorized);
@@ -49,17 +44,19 @@ impl<'info> EmployeeInit<'info> {
         //Update project State
         self.project.employee_number += 1;
 
-        let id = id;
+        //Employee Init
+        let id = self.project.employee_number + 1 ;
         let project = self.project.key();
         let employee_wallet = employee_wallet;
         let username = username;
-        let hire_date = Clock::get()?.unix_timestamp;
-        let department = department;
         let title = title;
-        let compensation_amount = compensation_amount;
-        let payed_invoice = 0;
+        let department = department;
         let is_active = false;
-        let auto_renewal = false;
+        let is_freelancer = false;
+        let last_compensation_amount = 0;
+        let last_from_date = 0;
+        let last_to_date = 0;
+        let payed_invoice = 0;
         let employee_bump = employee_bump;
 
         self.employee.init(
@@ -67,13 +64,14 @@ impl<'info> EmployeeInit<'info> {
             project,
             employee_wallet,
             username,
-            hire_date,
-            department,
             title,
-            compensation_amount,
-            payed_invoice,
+            department,
             is_active,
-            auto_renewal,
+            is_freelancer,
+            last_compensation_amount,
+            last_from_date,
+            last_to_date,
+            payed_invoice,
             employee_bump,
         )
     }

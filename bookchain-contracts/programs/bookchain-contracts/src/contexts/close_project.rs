@@ -56,15 +56,15 @@ impl<'info> ProjectClose<'info> {
         id: u64,
     ) -> Result<()> {
         // Original Borrow
-        let info = self.project.to_account_info();
-        let mut data = info.try_borrow_mut_data()?;
+        let info = self.project.to_account_info(); //Create toAccountInfo = has all the data 
+        let mut data = info.try_borrow_mut_data()?; //Takes the data and ask write access to the account, you borrow it and 
 
         // Deserialize
-        let mut reader = &data[..];
-        let project = Project::try_deserialize(&mut reader)?;
+        let mut reader = &data[..]; //You create a reader that see all the data
+        let project = Project::try_deserialize(&mut reader)?; //Trydeseriaziliazed: if you have a look on accounts, Deseriaizling an array of bytes into a Project struct. =/= from borsh because it's an account desierialize and check the discriminator if it's correct
 
         // Authorization Checks
-        require!(project.id == id, ProjError::NotAuthorized);
+        require!(project.id == id, ProjError::NotAuthorized); //We need check's since it's an unchecked account
         require!(project.authority.key() == self.authority.key(), ProjError::NotAuthorized);
 
         // Transform to ClosedProject
@@ -76,14 +76,14 @@ impl<'info> ProjectClose<'info> {
         };
 
         // Serialize
-        let mut writer: Vec<u8> = vec![];
+        let mut writer: Vec<u8> = vec![]; //W implement the standard ... you can use whatever you want
         closed_project.try_serialize(&mut writer)?;
         // require_gt!(ClosedProject::space(), Project::space());
-        let padding_len = Project::space() - ClosedProject::space();
+        let padding_len = Project::space() - ClosedProject::space(); //It's finding the difference and adding the padding 
         writer.extend_from_slice(&vec![0; padding_len]);
 
         // Copy back to original data
-        sol_memcpy(&mut data, &writer, writer.len());
+        sol_memcpy(&mut data, &writer, writer.len()); //Copy the data from the writer to the original data that we found in the account 
 
         if project.balance > 0 {
             let seeds = &[
