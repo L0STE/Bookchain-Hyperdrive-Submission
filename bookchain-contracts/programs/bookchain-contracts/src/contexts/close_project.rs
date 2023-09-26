@@ -1,6 +1,7 @@
 use anchor_lang::{prelude::*};
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer, transfer};
 use anchor_spl::associated_token::AssociatedToken;
+use solana_program::program_memory::sol_memcpy;
 
 use crate::errors::ProjError;
 use crate::state::closed_project::ClosedProject;
@@ -19,19 +20,20 @@ pub struct ProjectClose<'info> {
     pub project_vault: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
-        close = authority,
-        seeds = [b"project", id.to_le_bytes().as_ref()], 
-        bump = project.project_bump,
-    )]
-    pub project: Account<'info, Project>,
-    #[account(
-        init, 
-        payer = authority, 
         seeds = [b"project", id.to_le_bytes().as_ref()], 
         bump,
-        space = ClosedProject::space() + 20
     )]
-    pub closed_project: Account<'info, ClosedProject>,
+    /// CHECK: This is... maybe safe?
+    pub project: UncheckedAccount<'info>,
+    // pub project: Account<'info, Project>,
+    // #[account(
+    //     init, 
+    //     payer = authority, 
+    //     seeds = [b"project", id.to_le_bytes().as_ref()], 
+    //     bump,
+    //     space = ClosedProject::space() + 20
+    // )]
+    // pub closed_project: Account<'info, ClosedProject>,
 
     #[account(mut)]
     pub authority: Signer<'info>,
@@ -52,40 +54,48 @@ impl<'info> ProjectClose<'info> {
         &mut self,
         id: u64,
     ) -> Result<()> {
-        require!(self.project.authority.key() == self.authority.key(), ProjError::NotAuthorized);
+        // let mut data: &[u8] = &self.project.try_borrow_data()?;
+        let mut old_project_data: &[u8] = &self.project.try_borrow_data()?;
+        let project = Project::try_deserialize(&mut old_project_data)?;
 
-        let id = self.project.id;
-        let authority = self.project.authority;
-        let name = self.project.name.clone();
-        let project_bump = self.project.project_bump;
+        require!(project.id == id, ProjError::NotAuthorized);
 
-        self.closed_project.init(
-            id,
-            authority,
-            name,
-            project_bump,
-        );
+        require!(project.authority.key() == self.authority.key(), ProjError::NotAuthorized);
 
-        if self.project.balance > 0 {
-
-            let seeds = &[
-            "project".as_bytes(),
-            &self.project.id.to_le_bytes(),
-            &[self.project.project_bump]
-        ];
-        let signer_seeds = &[&seeds[..]];
-
-        let cpi_program = self.system_program.to_account_info();
-        let cpi_accounts = Transfer{
-            from: self.project_vault.to_account_info(), 
-            to: self.authority_ata.to_account_info(),
-            authority: self.project.to_account_info(),
+        let closed_project = ClosedProject {
+            id: project.id,
+            authority: project.authority,
+            name: project.name,
+            project_bump: project.project_bump
         };
-        let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
-        transfer(cpi_context, self.project.balance)?;
+        if project.balance > 0 {
+            let seeds = &[
+                "project".as_bytes(),
+                &project.id.to_le_bytes(),
+                &[project.project_bump]
+            ];
+            let signer_seeds = &[&seeds[..]];
 
+            let cpi_program = self.system_program.to_account_info();
+            let cpi_accounts = Transfer{
+                from: self.project_vault.to_account_info(), 
+                to: self.authority_ata.to_account_info(),
+                authority: self.project.to_account_info(),
+            };
+            let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+
+            transfer(cpi_context, project.balance)?;
         }
+
+        let info = self.project.to_account_info();
+        let mut data = info.try_borrow_mut_data()?;
+        let dst: &mut [u8] = &mut data;
+        let mut writer: Vec<u8> = vec![];
+        closed_project.try_serialize(&mut writer)?;
+        let padding_len = dst.len() - writer.len();
+        writer.extend_from_slice(&vec![0; padding_len]);
+        sol_memcpy(dst, &writer, dst.len());
 
         Ok(())
     }
