@@ -1,6 +1,7 @@
 use anchor_lang::{prelude::*};
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer, transfer};
 use anchor_spl::associated_token::AssociatedToken;
+use solana_program::log::sol_log_slice;
 use solana_program::program_memory::sol_memcpy;
 
 use crate::errors::ProjError;
@@ -54,20 +55,35 @@ impl<'info> ProjectClose<'info> {
         &mut self,
         id: u64,
     ) -> Result<()> {
-        // let mut data: &[u8] = &self.project.try_borrow_data()?;
-        let mut old_project_data: &[u8] = &self.project.try_borrow_data()?;
-        let project = Project::try_deserialize(&mut old_project_data)?;
+        // Original Borrow
+        let info = self.project.to_account_info();
+        let mut data = info.try_borrow_mut_data()?;
 
+        // Deserialize
+        let mut reader = &data[..];
+        let project = Project::try_deserialize(&mut reader)?;
+
+        // Authorization Checks
         require!(project.id == id, ProjError::NotAuthorized);
-
         require!(project.authority.key() == self.authority.key(), ProjError::NotAuthorized);
 
+        // Transform to ClosedProject
         let closed_project = ClosedProject {
             id: project.id,
             authority: project.authority,
             name: project.name,
-            project_bump: project.project_bump
+            project_bump: project.project_bump,
         };
+
+        // Serialize
+        let mut writer: Vec<u8> = vec![];
+        closed_project.try_serialize(&mut writer)?;
+        // require_gt!(ClosedProject::space(), Project::space());
+        let padding_len = Project::space() - ClosedProject::space();
+        writer.extend_from_slice(&vec![0; padding_len]);
+
+        // Copy back to original data
+        sol_memcpy(&mut data, &writer, writer.len());
 
         if project.balance > 0 {
             let seeds = &[
@@ -87,16 +103,11 @@ impl<'info> ProjectClose<'info> {
 
             transfer(cpi_context, project.balance)?;
         }
-
-        let info = self.project.to_account_info();
-        let mut data = info.try_borrow_mut_data()?;
-        let dst: &mut [u8] = &mut data;
-        let mut writer: Vec<u8> = vec![];
-        closed_project.try_serialize(&mut writer)?;
-        let padding_len = dst.len() - writer.len();
-        writer.extend_from_slice(&vec![0; padding_len]);
-        sol_memcpy(dst, &writer, dst.len());
-
         Ok(())
     }
+}
+
+#[event]
+pub struct StructContents {
+    pub c: Vec<u8>
 }

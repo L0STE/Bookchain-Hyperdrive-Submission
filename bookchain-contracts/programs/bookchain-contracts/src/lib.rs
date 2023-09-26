@@ -6,7 +6,7 @@ mod state;
 
 use contexts::*;
 
-declare_id!("J6H2HZtGMogVJmVvRFX6qesvy6CASiR5uojmQCbWp5Yr");
+declare_id!("Dad4s5C2MTErQtFCwai2DgmskftMPM8iLxrJ3MRXrz62");
 
 #[program]
 pub mod bookchain_contracts {
@@ -63,9 +63,7 @@ pub mod bookchain_contracts {
         ctx: Context<ProjectClose>,
         id: u64,
     ) -> Result<()> {
-        ctx.accounts.close(id);
-
-        Ok(())
+        ctx.accounts.close(id)
     }
 
     pub fn create_employee(
