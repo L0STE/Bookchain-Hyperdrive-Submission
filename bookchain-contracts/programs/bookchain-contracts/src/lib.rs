@@ -6,7 +6,7 @@ mod state;
 
 use contexts::*;
 
-declare_id!("J6H2HZtGMogVJmVvRFX6qesvy6CASiR5uojmQCbWp5Yr");
+declare_id!("Dad4s5C2MTErQtFCwai2DgmskftMPM8iLxrJ3MRXrz62");
 
 #[program]
 pub mod bookchain_contracts {
@@ -18,7 +18,7 @@ pub mod bookchain_contracts {
         name: String,
         project_bump: u8,
     ) -> Result<()> {
-        ctx.accounts.init(id, name, project_bump);
+        ctx.accounts.init(id, name, project_bump)?;
 
         Ok(())
     }
@@ -27,7 +27,7 @@ pub mod bookchain_contracts {
         ctx: Context<ProjectChangeState>,
         auth: Pubkey,
     ) -> Result<()> {
-        ctx.accounts.project_change_auth(auth);
+        ctx.accounts.project_change_auth(auth)?;
 
         Ok(())
     }
@@ -36,7 +36,7 @@ pub mod bookchain_contracts {
         ctx: Context<ProjectChangeState>,
         name: String,
     ) -> Result<()> {
-        ctx.accounts.project_change_name(name);
+        ctx.accounts.project_change_name(name)?;
 
         Ok(())
     }
@@ -45,7 +45,7 @@ pub mod bookchain_contracts {
         ctx: Context<ProjectChangeBalance>,
         amount: u64,
     ) -> Result<()> {
-        ctx.accounts.project_deposit(amount);
+        ctx.accounts.project_deposit(amount)?;
 
         Ok(())
     }
@@ -54,7 +54,7 @@ pub mod bookchain_contracts {
         ctx: Context<ProjectChangeBalance>,
         amount: u64,
     ) -> Result<()> {
-        ctx.accounts.project_withdraw(amount);
+        ctx.accounts.project_withdraw(amount)?;
 
         Ok(())
     }
@@ -63,9 +63,7 @@ pub mod bookchain_contracts {
         ctx: Context<ProjectClose>,
         id: u64,
     ) -> Result<()> {
-        ctx.accounts.close(id);
-
-        Ok(())
+        ctx.accounts.close(id)
     }
 
     pub fn create_employee(
@@ -78,7 +76,7 @@ pub mod bookchain_contracts {
         compensation_amount: u64,
         employee_bump: u8,
     ) -> Result<()> {
-        ctx.accounts.init(id, employee_wallet, username, department, title, compensation_amount, employee_bump,);
+        ctx.accounts.init(id, employee_wallet, username, department, title, employee_bump,)?;
         
         Ok(())
     }

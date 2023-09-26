@@ -65,7 +65,7 @@ describe("bookchain-contracts", () => {
           signature,
           ...latestBlockhash,
       },
-    "finalized"
+    "confirmed"
     );
   })
 
@@ -87,7 +87,7 @@ describe("bookchain-contracts", () => {
     })
     .signers([
       wallet
-    ]).rpc({skipPreflight: true});
+    ]).rpc().then(confirmTx);
 
     let projectAccount = await program.account.project.fetch(project);
     console.log(`Project Address: ${project}`);
@@ -217,7 +217,6 @@ describe("bookchain-contracts", () => {
       .accounts({
         projectVault: vault,
         project: project,
-        closedProject: project,
         authority: wallet.publicKey,
         authorityAta: WalletAta,
         token: NATIVE_MINT,
@@ -227,7 +226,13 @@ describe("bookchain-contracts", () => {
       })
       .signers([
         wallet
-      ]).rpc();
+      ]).rpc().then(confirmTx);
+
+      let transaction = await anchor.getProvider().connection.getTransaction(tx, { commitment: "confirmed" });
+      console.log(transaction)
+
+      let account = await program.account.closedProject.fetch(project, "confirmed");
+      console.log(account)
 
     } catch (err) {
       console.log(err);
@@ -236,3 +241,16 @@ describe("bookchain-contracts", () => {
   });
 
 });
+
+
+const confirmTx = async (signature: string): Promise<string> => {
+  const latestBlockhash = await anchor.getProvider().connection.getLatestBlockhash();
+  await anchor.getProvider().connection.confirmTransaction(
+    {
+      signature,
+      ...latestBlockhash,
+    },
+    "confirmed"
+  )
+  return signature
+}
